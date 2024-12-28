@@ -1,5 +1,8 @@
 name: Analyze Markdown Tags
 
+permissions:
+  contents: write
+
 on:
   release:
     types: [published]
