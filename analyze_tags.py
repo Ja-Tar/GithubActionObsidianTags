@@ -6,12 +6,17 @@ from subprocess import check_output
 def get_tags_from_file(content):
     # Znajduje wszystkie tagi w sekcji właściwości pliku
     tags = set()
-    properties_match = re.search(r'---\n(.*?)\n---', content, re.DOTALL)
+    properties_match = re.search(r'---\n([\s\S]*?)\n---', content)
     if properties_match:
         properties_content = properties_match.group(1)
-        tags_match = re.search(r'tags:\s*\[(.*?)\]', properties_content, re.DOTALL)
-        if tags_match:
-            tags = set(tag.strip() for tag in tags_match.group(1).split(','))
+        # Najpierw znajdź sekcję tags
+        tags_section = re.search(r'tags:\s*\n((?:\s*-[^\n]*\n?)+)', properties_content)
+        if tags_section:
+            # Następnie wyodrębnij poszczególne tagi
+            tags = set(
+                tag.strip() 
+                for tag in re.findall(r'-\s*([^\n]+)', tags_section.group(1))
+            )
     return tags
 
 def get_file_content(sha, file_path):
