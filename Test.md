@@ -1,6 +1,6 @@
 ---
 tags:
-  - "#test"
+  - test
   - test2
   - lubieplacki
 ---

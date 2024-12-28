@@ -4,8 +4,15 @@ from github import Github
 from subprocess import check_output
 
 def get_tags_from_file(content):
-    # Znajduje wszystkie tagi w formacie #tag w pliku
-    return set(re.findall(r'#(\w+)', content))
+    # Znajduje wszystkie tagi w sekcji właściwości pliku
+    tags = set()
+    properties_match = re.search(r'---\n(.*?)\n---', content, re.DOTALL)
+    if properties_match:
+        properties_content = properties_match.group(1)
+        tags_match = re.search(r'tags:\s*\[(.*?)\]', properties_content, re.DOTALL)
+        if tags_match:
+            tags = set(tag.strip() for tag in tags_match.group(1).split(','))
+    return tags
 
 def get_file_content(sha, file_path):
     try:
@@ -51,10 +58,10 @@ def generate_markdown_table(stats):
         elif after < before:
             change = '↓'
         else:
-            change = '→'
-            
-        lines.append(f'| #{tag} | {before} | {after} | {change} |')
+            change = '='
         
+        lines.append(f'| {tag} | {before} | {after} | {change} |')
+    
     return '\n'.join(lines)
 
 # Główna logika
