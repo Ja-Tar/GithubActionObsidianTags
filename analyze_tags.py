@@ -63,7 +63,7 @@ def generate_markdown_table(stats):
         elif after < before:
             change = '🔻'
         else:
-            change = '🟰'
+            change = '🔲'
         
         lines.append(f'| {tag} | {before} | {after} | {change} |')
     
