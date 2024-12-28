@@ -52,18 +52,18 @@ def compare_tags(before_sha, after_sha):
     return tag_stats
 
 def generate_markdown_table(stats):
-    lines = ['| Tag | Before | After | Change |', '|------|---------|--------|---------|']
+    lines = ['| Tag | Przed | Po | Zmiana |', '|------|---------|--------|---------|']
     
     for tag, counts in sorted(stats.items()):
         before = counts['before']
         after = counts['after']
         
         if after > before:
-            change = '↑'
+            change = '🔺'
         elif after < before:
-            change = '↓'
+            change = '🔻'
         else:
-            change = '='
+            change = '🟰'
         
         lines.append(f'| {tag} | {before} | {after} | {change} |')
     
@@ -86,5 +86,5 @@ if previous_release:
     
     # Zaktualizuj opis release'u
     current_body = current_release.body or ''
-    new_body = f"{current_body}\n\n## Tag Changes\n{table}"
+    new_body = f"{current_body}\n\n## Zmiany w ilości tagów\n{table}"
     current_release.update_release(name=current_release.title, message=new_body)
