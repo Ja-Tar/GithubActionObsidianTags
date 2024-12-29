@@ -30,4 +30,4 @@ jobs:
       - name: Analyze tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python analyze_tags.py
+        run: python /.github/analyze_tags.py
