@@ -40,7 +40,11 @@ def compare_tags(before_sha, after_sha):
         # Znajdź wszystkie pliki .md rekursywnie
         md_files = check_output(['git', 'ls-tree', '-r', after_sha, '--name-only'], 
                               encoding='utf-8').splitlines()
+        print(f'Znaleziono plików: {len(md_files)}')
+        for file in md_files:
+            print(file)
         md_files = [f for f in md_files if f.endswith('.md')]
+        print(f'Znaleziono plików .md: {len(md_files)}')
         
         for file_path in md_files:
             before_content = get_file_content(before_sha, file_path)
