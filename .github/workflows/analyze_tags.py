@@ -1,7 +1,7 @@
 import os
 import re
 from github import Github
-from subprocess import check_output
+from subprocess import check_output, CalledProcessError
 
 def get_tags_from_file(content):
     # Znajduje wszystkie tagi w sekcji właściwości pliku
@@ -21,34 +21,51 @@ def get_tags_from_file(content):
 
 def get_file_content(sha, file_path):
     try:
-        return check_output(['git', 'show', f'{sha}:{file_path}']).decode('utf-8')
-    except:
+        # Escape ścieżki plików zawierających spacje lub znaki specjalne
+        escaped_path = file_path.replace(' ', '\\ ').replace('(', '\\(').replace(')', '\\)')
+        return check_output(['git', 'show', f'{sha}:{escaped_path}'], encoding='utf-8')
+    except CalledProcessError:
         return ''
+    except UnicodeDecodeError:
+        try:
+            # Próbuj alternatywnego kodowania jeśli UTF-8 zawiedzie
+            return check_output(['git', 'show', f'{sha}:{escaped_path}'], encoding='latin1')
+        except:
+            return ''
 
 def compare_tags(before_sha, after_sha):
     tag_stats = {}
     
-    # Znajdź wszystkie pliki .md
-    md_files = check_output(['git', 'ls-tree', '-r', after_sha, '--name-only']).decode('utf-8').splitlines()
-    md_files = [f for f in md_files if f.endswith('.md')]
-    
-    for file_path in md_files:
-        before_content = get_file_content(before_sha, file_path)
-        after_content = get_file_content(after_sha, file_path)
+    try:
+        # Znajdź wszystkie pliki .md rekursywnie
+        md_files = check_output(['git', 'ls-tree', '-r', after_sha, '--name-only'], 
+                              encoding='utf-8').splitlines()
+        md_files = [f for f in md_files if f.endswith('.md')]
         
-        before_tags = get_tags_from_file(before_content)
-        after_tags = get_tags_from_file(after_content)
-        
-        # Zlicz tagi
-        for tag in before_tags | after_tags:
-            if tag not in tag_stats:
-                tag_stats[tag] = {'before': 0, 'after': 0}
+        for file_path in md_files:
+            before_content = get_file_content(before_sha, file_path)
+            after_content = get_file_content(after_sha, file_path)
             
-            if tag in before_tags:
-                tag_stats[tag]['before'] += 1
-            if tag in after_tags:
-                tag_stats[tag]['after'] += 1
+            if not before_content and not after_content:
+                continue
+                
+            before_tags = get_tags_from_file(before_content)
+            after_tags = get_tags_from_file(after_content)
+            
+            # Zlicz tagi
+            for tag in before_tags | after_tags:
+                if tag not in tag_stats:
+                    tag_stats[tag] = {'before': 0, 'after': 0}
+                
+                if tag in before_tags:
+                    tag_stats[tag]['before'] += 1
+                if tag in after_tags:
+                    tag_stats[tag]['after'] += 1
     
+    except CalledProcessError as e:
+        print(f"Błąd podczas wykonywania komendy git: {e}")
+        return {}
+        
     return tag_stats
 
 def generate_markdown_table(stats):
